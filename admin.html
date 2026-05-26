@@ -2,69 +2,98 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel Admin | AlexDHZ</title>
+    <title>Master Admin | AlexDHZ</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f7; display: flex; justify-content: center; padding: 40px; }
-        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
-        h2 { text-align: center; color: #333; margin-bottom: 25px; }
-        label { display: block; font-size: 12px; font-weight: bold; color: #666; margin-bottom: 5px; }
-        input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #000; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        body { font-family: 'Lato', sans-serif; background: #f4f7f6; padding: 40px; display: flex; justify-content: center; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h2 { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; color: #333; }
+        label { display: block; margin-top: 15px; font-size: 11px; font-weight: bold; color: #666; text-transform: uppercase; }
+        input { width: 100%; padding: 12px; margin: 5px 0 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #000; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.3s; }
         button:hover { background: #333; }
-        #resultado { display: none; margin-top: 25px; padding: 15px; background: #f8f9fa; border: 1px dashed #007bff; border-radius: 8px; }
-        #url-final { font-size: 12px; word-break: break-all; color: #007bff; display: block; margin-bottom: 10px; font-family: monospace; }
-        .btn-copiar { background: #007bff; padding: 8px; font-size: 12px; }
+        .btn-save { background: #28a745; margin-top: 20px; }
+        .btn-save:hover { background: #218838; }
+        #link-box { display:none; background: #e7f3ff; padding: 15px; margin-top: 20px; border: 1px dashed #007bff; font-size: 12px; word-break: break-all; border-radius: 8px; }
+        .status { font-size: 12px; color: #007bff; font-weight: bold; margin-top: 5px; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>Nueva Galería</h2>
+        <h2>Configurador AlexDHZ</h2>
         
-        <label>ID CARPETA GOOGLE DRIVE</label>
-        <input type="text" id="f" placeholder="Ej: 1A2b3C4d5E6f...">
+        <label>1. ID Carpeta Drive (Fotos)</label>
+        <input type="text" id="folderId" placeholder="Pega el ID de la carpeta">
+        <button onclick="cargarCarpeta()">PASO 1: ESCANEAR FOTOS</button>
+        <div id="status" class="status"></div>
 
-        <label>NOMBRE DEL CLIENTE</label>
-        <input type="text" id="t" placeholder="Ej: CONSTANZA">
+        <div id="config-seccion" style="display:none; margin-top:20px; border-top: 2px solid #f4f4f4; padding-top:10px;">
+            <label>Título de la Galería</label>
+            <input type="text" id="t" placeholder="Ej: SUSY">
+            
+            <label>Evento (Subtítulo)</label>
+            <input type="text" id="s" placeholder="Ej: MIS XV AÑOS">
+            
+            <label>ID Foto Portada (Header)</label>
+            <input type="text" id="p" placeholder="ID de la imagen principal">
+            
+            <label>ID Video Drive (Opcional)</label>
+            <input type="text" id="v" placeholder="ID del archivo de video">
+            
+            <button class="btn-save" onclick="guardarConfig()">PASO 2: GUARDAR Y ACTIVAR</button>
+        </div>
 
-        <label>EVENTO / SUBTÍTULO</label>
-        <input type="text" id="s" placeholder="Ej: MIS XV AÑOS">
-
-        <label>ID FOTO PORTADA</label>
-        <input type="text" id="p" placeholder="ID de la foto principal">
-
-        <label>ID VIDEO (OPCIONAL)</label>
-        <input type="text" id="v" placeholder="ID del video en Drive">
-
-        <button onclick="generarLink()">GENERAR ENLACE CORTO</button>
-
-        <div id="resultado">
-            <label>Link listo para enviar:</label>
-            <span id="url-final"></span>
-            <button class="btn-copiar" onclick="copiar()">COPIAR LINK</button>
+        <div id="link-box">
+            <strong>Link para el Cliente:</strong><br>
+            <span id="url-final" style="color: #007bff;"></span>
         </div>
     </div>
 
     <script>
-        function generarLink() {
-            const f = document.getElementById('f').value.trim();
-            const t = document.getElementById('t').value.trim();
-            const s = document.getElementById('s').value.trim();
-            const p = document.getElementById('p').value.trim();
-            const v = document.getElementById('v').value.trim();
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyI_eOY3aNOYfmRXoOUJqMmoMkCXh__kemfbGk2MfBAzf9uXUVMvGKwlrWwaeIo_raN/exec"; 
+        let fotosEscaneadas = [];
 
-            if(!f || !t) return alert("El ID de carpeta y Nombre son obligatorios");
-
-            const baseUrl = "https://alexdhzgaleries.netlify.app/";
-            const query = `?f=${f}&t=${encodeURIComponent(t)}&s=${encodeURIComponent(s)}&p=${p}&v=${v}`;
-            const linkFinal = baseUrl + query;
-
-            document.getElementById('url-final').innerText = linkFinal;
-            document.getElementById('resultado').style.display = "block";
+        async function cargarCarpeta() {
+            const fid = document.getElementById('folderId').value.trim();
+            if(!fid) return alert("Pon el ID de carpeta");
+            
+            document.getElementById('status').innerText = "Escaneando Drive... por favor espera.";
+            
+            try {
+                const res = await fetch(`${WEB_APP_URL}?folder=${fid}&action=scan`);
+                fotosEscaneadas = await res.json();
+                document.getElementById('status').innerText = `✔ ${fotosEscaneadas.length} fotos encontradas.`;
+                document.getElementById('config-seccion').style.display = "block";
+            } catch(e) { alert("Error al escanear carpeta"); }
         }
 
-        function copiar() {
-            const link = document.getElementById('url-final').innerText;
-            navigator.clipboard.writeText(link).then(() => alert("¡Copiado!"));
+        async function guardarConfig() {
+            const btn = document.querySelector('.btn-save');
+            btn.innerText = "Guardando configuración...";
+
+            const config = {
+                folderId: document.getElementById('folderId').value.trim(),
+                t: document.getElementById('t').value.trim(),
+                s: document.getElementById('s').value.trim(),
+                p: document.getElementById('p').value.trim(),
+                v: document.getElementById('v').value.trim(),
+                fotos: fotosEscaneadas
+            };
+
+            try {
+                // Enviamos los datos al script de Google para crear el JSON en la carpeta
+                await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(config)
+                });
+
+                // El link ahora es súper corto y siempre el mismo
+                const link = `https://alexdhzgaleries.netlify.app/?f=${config.folderId}`;
+                document.getElementById('url-final').innerText = link;
+                document.getElementById('link-box').style.display = "block";
+                btn.innerText = "¡GALERÍA ACTIVADA!";
+                btn.style.background = "#000";
+            } catch(e) { alert("Error al guardar"); }
         }
     </script>
 </body>
