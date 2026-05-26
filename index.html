@@ -3,18 +3,14 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title id="html-title">Cargando...</title>
-
-    <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1hpQGY_QfG4VAE4g8VJRTAYAXUWE-XtOB&sz=w32">
+    <title id="html-title">Galería</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
     <link rel="stylesheet" href="style.css" />
-    
     <style>
       :root { --url-portada: none; }
-      .header-galeria::before {
-        background-image: var(--url-portada) !important;
-        background-color: #111;
-      }
+      .header-galeria::before { background-image: var(--url-portada) !important; background-color: #111; }
+      /* Estilo para errores visibles */
+      .error-debug { color: #ff4444; padding: 20px; font-size: 12px; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -25,56 +21,71 @@
       <img src="https://drive.google.com/thumbnail?id=1hpQGY_QfG4VAE4g8VJRTAYAXUWE-XtOB&sz=w200" class="logo-header" alt="Logo">
     </div>
 
-    <div id="cargando-texto" class="cargando">Cargando...</div> <div class="grid-galeria" id="contenedor-galeria"></div>
+    <div class="barra-acciones" id="barra-acciones" style="display: none;">
+      <button id="btn-ver-favoritos" class="btn-accion">FAVORITOS</button>
+    </div>
+
+    <div id="cargando-texto" class="cargando">Cargando recuerdos...</div>
+    <div id="debug-log" class="error-debug"></div> <div class="grid-galeria" id="contenedor-galeria"></div>
 
     <script src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js"></script>
 
     <script>
+      // 1. URL DE TU SCRIPT (Verifica que sea la última versión implementada)
       const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwDzqk_-hYbnazbaXgwWgmdD5hVbMxJ_6nVqbVRIUY53wAKyXLAjIpNzHVu9EqcCppH/exec"; 
 
       const urlParams = new URLSearchParams(window.location.search);
       const ID_CARPETA = urlParams.get('folder'); 
       const TITULO = urlParams.get('t') || "Galería Privada";
-      const SUBTITULO = urlParams.get('s') || "Fotografía";
+      const SUBTITULO = urlParams.get('s') || "Sesión";
       const ID_PORTADA = urlParams.get('p');
-      const ID_VIDEO = urlParams.get('v');
 
       document.getElementById('txt-titulo').innerText = TITULO;
       document.getElementById('txt-subtitulo').innerText = SUBTITULO;
-      document.getElementById('html-title').innerText = `${TITULO} | Galería`;
 
       if (ID_PORTADA) {
         document.documentElement.style.setProperty('--url-portada', `url(https://drive.google.com/thumbnail?id=${ID_PORTADA}&sz=w2500)`);
       }
 
-      const contenedor = document.getElementById("contenedor-galeria");
-      const cargandoTexto = document.getElementById("cargando-texto");
-
       let todasLasFotos = [];
-      let lightboxInstancia = null;
       let indiceActual = 0;
-      const FOTOS_POR_LOTE = 15; 
+      const FOTOS_POR_LOTE = 15;
       let columnasGlobales = [];
 
-      if (ID_CARPETA) {
+      if (!ID_CARPETA) {
+          document.getElementById("cargando-texto").innerText = "⚠️ Falta el ID de la carpeta en la URL.";
+      } else {
+          // LLAMADA CON REDIRECCIÓN MANEJADA
           fetch(`${WEB_APP_URL}?folder=${ID_CARPETA}`)
-            .then(res => res.json())
-            .then(fotos => {
-              cargandoTexto.style.display = "none";
-              todasLasFotos = fotos; 
-              document.getElementById("barra-acciones").style.display = "flex";
-              iniciarGaleria(todasLasFotos); 
+            .then(response => {
+                if (!response.ok) throw new Error('Respuesta de red no OK');
+                return response.json();
             })
-            .catch(err => {
-              cargandoTexto.innerText = "Error al cargar imágenes.";
+            .then(data => {
+              document.getElementById("cargando-texto").style.display = "none";
+              
+              if (Array.isArray(data) && data.length > 0) {
+                  todasLasFotos = data;
+                  document.getElementById("barra-acciones").style.display = "flex";
+                  iniciarGaleria();
+              } else {
+                  document.getElementById("debug-log").innerText = "Aviso: La carpeta está vacía o el script no devolvió fotos.";
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              document.getElementById("cargando-texto").style.display = "none";
+              document.getElementById("debug-log").innerText = "Error de conexión: " + error.message;
             });
       }
 
-      function iniciarGaleria(listaFotos) {
-        contenedor.innerHTML = ""; 
-        indiceActual = 0;
-        let numColumnas = window.innerWidth > 768 ? 3 : 2;
-        for (let i = 0; i < numColumnas; i++) {
+      function iniciarGaleria() {
+        const contenedor = document.getElementById("contenedor-galeria");
+        contenedor.innerHTML = "";
+        columnasGlobales = [];
+        let numCols = window.innerWidth > 768 ? 3 : 2;
+
+        for (let i = 0; i < numCols; i++) {
           let col = document.createElement("div");
           col.className = "columna-masonry";
           contenedor.appendChild(col);
@@ -84,20 +95,18 @@
       }
 
       function cargarSiguienteLote() {
-        let fragmento = todasLasFotos.slice(indiceActual, indiceActual + FOTOS_POR_LOTE);
-        if (fragmento.length === 0) return; 
+        let lote = todasLasFotos.slice(indiceActual, indiceActual + FOTOS_POR_LOTE);
+        if (lote.length === 0) return;
 
-        fragmento.forEach((foto, i) => {
-          // Cambiamos el formato de la URL de alta resolución para evitar el error de Drive
-          const miniatura = `https://drive.google.com/thumbnail?id=${foto.id}&sz=w600`;
-          const altaRes = `https://drive.google.com/uc?export=view&id=${foto.id}`;
-
+        lote.forEach((foto, i) => {
           const enlace = document.createElement("a");
-          enlace.href = altaRes;
-          enlace.className = "foto-link glightbox";
+          // URL de visualización directa para evitar errores de Lightbox
+          enlace.href = `https://drive.google.com/uc?export=view&id=${foto.id}`;
+          enlace.className = "glightbox foto-link";
           
           const img = document.createElement("img");
-          img.src = miniatura;
+          // Tamaño mediano para carga rápida
+          img.src = `https://drive.google.com/thumbnail?id=${foto.id}&sz=w600`;
           img.className = "foto-img";
           
           enlace.appendChild(img);
@@ -105,14 +114,11 @@
         });
 
         indiceActual += FOTOS_POR_LOTE;
-        
-        // Reiniciar Lightbox para que reconozca las nuevas fotos
-        if (lightboxInstancia) lightboxInstancia.destroy();
-        lightboxInstancia = GLightbox({ selector: '.glightbox' });
+        GLightbox({ selector: '.glightbox' });
       }
 
       window.onscroll = () => {
-        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 1000) {
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) {
           cargarSiguienteLote();
         }
       };
