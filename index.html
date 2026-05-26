@@ -3,76 +3,71 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title id="html-title">Galería | AlexDHZ</title>
+    <title>Cargando Galería...</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
     <link rel="stylesheet" href="style.css" />
     <style>
-      :root { --url-portada: none; }
-      .header-galeria::before { background-image: var(--url-portada) !important; background-color: #111; }
-      .loading-overlay { text-align: center; padding: 100px 20px; font-family: sans-serif; color: #666; }
-      .spinner { border: 4px solid rgba(0,0,0,.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #000; animation: spin 1s linear infinite; margin: 0 auto 10px; }
-      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        :root { --url-portada: none; }
+        .header-galeria::before { background-image: var(--url-portada) !important; background-color: #111; }
+        .loader-container { padding: 100px 20px; text-align: center; color: #888; font-size: 14px; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
     <div class="header-galeria" id="header-portada">
-      <div class="titulo" id="txt-titulo">Cargando...</div>
-      <div class="subtitulo" id="txt-subtitulo">Preparando recuerdos</div>
+      <div class="titulo" id="txt-titulo">Cargando</div>
+      <div class="subtitulo" id="txt-subtitulo">...</div>
       <img src="https://drive.google.com/thumbnail?id=1hpQGY_QfG4VAE4g8VJRTAYAXUWE-XtOB&sz=w200" class="logo-header">
     </div>
 
     <div class="contenedor-video" id="seccion-video" style="display: none;">
         <div class="video-columna">
             <div class="video-wrapper">
-                <iframe id="iframe-video" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                <iframe id="iframe-video" src="" allowfullscreen></iframe>
             </div>
         </div>
     </div>
 
-    <div id="loader" class="loading-overlay">
-        <div class="spinner"></div>
-        <p>Cargando fotos desde Drive...</p>
-    </div>
-    
+    <div id="loader" class="loader-container">PREPARANDO TUS RECUERDOS...</div>
     <div class="grid-galeria" id="contenedor-galeria"></div>
 
     <script src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js"></script>
 
     <script>
-      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwDzqk_-hYbnazbaXgwWgmdD5hVbMxJ_6nVqbVRIUY53wAKyXLAjIpNzHVu9EqcCppH/exec"; 
+      const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyI_eOY3aNOYfmRXoOUJqMmoMkCXh__kemfbGk2MfBAzf9uXUVMvGKwlrWwaeIo_raN/exec"; 
       const urlParams = new URLSearchParams(window.location.search);
-      
-      const TITULO = urlParams.get('t') || "Mi Galería";
-      const SUBTITULO = urlParams.get('s') || "Sesión Fotográfica";
-      const ID_PORTADA = urlParams.get('p');
-      const ID_CARPETA = urlParams.get('f');
-      const ID_VIDEO = urlParams.get('v');
+      const folderId = urlParams.get('f');
 
-      // Inyectar textos
-      document.getElementById('txt-titulo').innerText = TITULO;
-      document.getElementById('txt-subtitulo').innerText = SUBTITULO;
-      document.getElementById('html-title').innerText = TITULO + " | AlexDHZ";
-
-      if (ID_PORTADA) {
-        document.documentElement.style.setProperty('--url-portada', `url(https://drive.google.com/thumbnail?id=${ID_PORTADA}&sz=w2500)`);
-      }
-
-      if (ID_VIDEO) {
-          document.getElementById('seccion-video').style.display = "flex";
-          document.getElementById('iframe-video').src = `https://drive.google.com/file/d/${ID_VIDEO}/preview`;
-      }
-
-      // Cargar Fotos
-      if (ID_CARPETA) {
-          fetch(`${WEB_APP_URL}?folder=${ID_CARPETA}`)
+      if (folderId) {
+          // Acción "read": Lee el archivito de configuración instantáneamente
+          fetch(`${WEB_APP_URL}?folder=${folderId}&action=read`)
             .then(res => res.json())
-            .then(data => {
+            .then(config => {
+                if(config.error) {
+                    document.getElementById('loader').innerText = "La galería aún no ha sido configurada por el administrador.";
+                    return;
+                }
+                
+                // 1. Configurar Interfaz
+                document.getElementById('txt-titulo').innerText = config.t;
+                document.getElementById('txt-subtitulo').innerText = config.s;
+                document.title = config.t + " | Galería";
+
+                if(config.p) {
+                    document.documentElement.style.setProperty('--url-portada', `url(https://drive.google.com/thumbnail?id=${config.p}&sz=w2500)`);
+                }
+                
+                if(config.v) {
+                    document.getElementById('seccion-video').style.display = "flex";
+                    document.getElementById('iframe-video').src = `https://drive.google.com/file/d/${config.v}/preview`;
+                }
+
+                // 2. Mostrar Fotos
+                renderizarFotos(config.fotos);
                 document.getElementById('loader').style.display = "none";
-                renderizarFotos(data);
             })
-            .catch(err => {
-                document.getElementById('loader').innerHTML = "<p>Error al cargar la carpeta. Revisa los permisos.</p>";
+            .catch(() => {
+                document.getElementById('loader').innerText = "Error al conectar con la base de datos.";
             });
       }
 
@@ -80,28 +75,20 @@
         const contenedor = document.getElementById("contenedor-galeria");
         let numCols = window.innerWidth > 768 ? 3 : 2;
         let columnas = [];
-        
         for (let i = 0; i < numCols; i++) {
-          let col = document.createElement("div");
-          col.className = "columna-masonry";
-          contenedor.appendChild(col);
-          columnas.push(col);
+          let col = document.createElement("div"); col.className = "columna-masonry";
+          contenedor.appendChild(col); columnas.push(col);
         }
-
-        fotos.forEach((foto, i) => {
-          const enlace = document.createElement("a");
-          enlace.href = `https://drive.google.com/uc?export=view&id=${foto.id}`;
-          enlace.className = "glightbox";
-          
+        fotos.forEach((f, i) => {
+          const a = document.createElement("a");
+          a.href = `https://drive.google.com/uc?export=view&id=${f.id}`;
+          a.className = "glightbox";
           const img = document.createElement("img");
-          img.src = `https://drive.google.com/thumbnail?id=${foto.id}&sz=w600`;
+          img.src = `https://drive.google.com/thumbnail?id=${f.id}&sz=w600`;
           img.className = "foto-img";
-          img.loading = "lazy";
-          
-          enlace.appendChild(img);
-          columnas[i % numCols].appendChild(enlace);
+          a.appendChild(img);
+          columnas[i % numCols].appendChild(a);
         });
-
         GLightbox({ selector: '.glightbox', touchNavigation: true, loop: true });
       }
     </script>
