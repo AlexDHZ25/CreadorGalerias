@@ -2,108 +2,69 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin | Generador de Galerías AlexDHZ</title>
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <title>Panel Admin | AlexDHZ</title>
     <style>
-        body { font-family: 'Lato', sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .card { background: white; padding: 35px; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); width: 100%; max-width: 480px; }
-        h2 { margin: 0 0 20px 0; font-size: 22px; color: #1a1a1a; border-bottom: 2px solid #eee; padding-bottom: 15px; text-align: center; }
-        label { display: block; margin-top: 15px; font-size: 11px; color: #888; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
-        input { width: 100%; padding: 12px; margin-top: 6px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; transition: border 0.3s; }
-        input:focus { border-color: #000; outline: none; }
-        button { width: 100%; padding: 16px; background: #000; color: #fff; border: none; border-radius: 8px; margin-top: 25px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.3s; }
-        button:hover { background: #333; transform: translateY(-1px); }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        
-        #link-generado { margin-top: 30px; padding: 20px; background: #f8fbff; border-radius: 10px; border: 1px dashed #007bff; display: none; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        #url-final { font-size: 11px; word-break: break-all; font-family: monospace; background: #fff; padding: 12px; border: 1px solid #dce8f5; display: block; margin: 15px 0; border-radius: 4px; color: #004085; max-height: 150px; overflow-y: auto; }
-        .btn-copy { background: #007bff; padding: 10px; font-size: 12px; margin-top: 5px; width: 100%; }
-        .btn-copy:hover { background: #0056b3; }
-        .hint { font-size: 10px; color: #aaa; margin-top: 4px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #eef2f7; display: flex; justify-content: center; padding: 40px; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { text-align: center; color: #333; margin-bottom: 25px; }
+        label { display: block; font-size: 12px; font-weight: bold; color: #666; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #000; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        button:hover { background: #333; }
+        #resultado { display: none; margin-top: 25px; padding: 15px; background: #f8f9fa; border: 1px dashed #007bff; border-radius: 8px; }
+        #url-final { font-size: 12px; word-break: break-all; color: #007bff; display: block; margin-bottom: 10px; font-family: monospace; }
+        .btn-copiar { background: #007bff; padding: 8px; font-size: 12px; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>Generador AlexDHZ</h2>
+        <h2>Nueva Galería</h2>
         
-        <label>1. ID de la Carpeta (Fotos)</label>
-        <input type="text" id="folderId" placeholder="Pega el ID de Google Drive">
+        <label>ID CARPETA GOOGLE DRIVE</label>
+        <input type="text" id="f" placeholder="Ej: 1A2b3C4d5E6f...">
 
-        <label>2. Nombre del Cliente</label>
-        <input type="text" id="titulo" placeholder="Ej: CONSTANZA">
+        <label>NOMBRE DEL CLIENTE</label>
+        <input type="text" id="t" placeholder="Ej: CONSTANZA">
 
-        <label>3. Tipo de Evento</label>
-        <input type="text" id="subtitulo" placeholder="Ej: MIS XV">
+        <label>EVENTO / SUBTÍTULO</label>
+        <input type="text" id="s" placeholder="Ej: MIS XV AÑOS">
 
-        <label>4. ID Foto de Portada</label>
-        <input type="text" id="portadaId" placeholder="ID de la foto principal">
+        <label>ID FOTO PORTADA</label>
+        <input type="text" id="p" placeholder="ID de la foto principal">
 
-        <label>5. ID de Video (Opcional)</label>
-        <input type="text" id="videoId" placeholder="ID del video en Drive">
-        
-        <button id="btnGenerar" onclick="generarEnlace()">GENERAR ENLACE RÁPIDO</button>
+        <label>ID VIDEO (OPCIONAL)</label>
+        <input type="text" id="v" placeholder="ID del video en Drive">
 
-        <div id="link-generado">
-            <span style="font-size: 12px; color: #007bff; font-weight: bold;">Enlace optimizado:</span>
-            <code id="url-final"></code>
-            <button class="btn-copy" onclick="copiar()">COPIAR ENLACE</button>
-            <div class="hint" style="text-align: center; margin-top: 10px;">Este link es más corto y carga al instante.</div>
+        <button onclick="generarLink()">GENERAR ENLACE CORTO</button>
+
+        <div id="resultado">
+            <label>Link listo para enviar:</label>
+            <span id="url-final"></span>
+            <button class="btn-copiar" onclick="copiar()">COPIAR LINK</button>
         </div>
     </div>
 
     <script>
-        async function generarEnlace() {
-            const btn = document.getElementById('btnGenerar');
-            const f = document.getElementById('folderId').value.trim();
-            const t = document.getElementById('titulo').value.trim();
-            const s = document.getElementById('subtitulo').value.trim();
-            const p = document.getElementById('portadaId').value.trim();
-            const v = document.getElementById('videoId').value.trim();
+        function generarLink() {
+            const f = document.getElementById('f').value.trim();
+            const t = document.getElementById('t').value.trim();
+            const s = document.getElementById('s').value.trim();
+            const p = document.getElementById('p').value.trim();
+            const v = document.getElementById('v').value.trim();
 
-            if(!f || !t) { 
-                alert("Mínimo necesitas ID de carpeta y Nombre."); 
-                return; 
-            }
+            if(!f || !t) return alert("El ID de carpeta y Nombre son obligatorios");
 
-            btn.disabled = true;
-            btn.innerText = "Procesando datos...";
+            const baseUrl = "https://alexdhzgaleries.netlify.app/";
+            const query = `?f=${f}&t=${encodeURIComponent(t)}&s=${encodeURIComponent(s)}&p=${p}&v=${v}`;
+            const linkFinal = baseUrl + query;
 
-            const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwDzqk_-hYbnazbaXgwWgmdD5hVbMxJ_6nVqbVRIUY53wAKyXLAjIpNzHVu9EqcCppH/exec";
-
-            try {
-                // 1. Obtener datos de Google
-                const response = await fetch(`${WEB_APP_URL}?folder=${f}`);
-                const fotos = await response.json();
-
-                if (fotos.error) throw new Error(fotos.error);
-
-                // 2. COMPRESIÓN: Solo enviamos IDs separados por comas
-                const soloIds = fotos.map(foto => foto.id).join(',');
-                const dataComprimida = btoa(soloIds);
-
-                // 3. Construir URL a la raíz de tu dominio
-                const URL_BASE = "https://alexdhzgaleries.netlify.app/"; 
-                const linkFinal = `${URL_BASE}?t=${encodeURIComponent(t)}&s=${encodeURIComponent(s)}&p=${p}&v=${v}&f=${f}&d=${dataComprimida}`;
-
-                document.getElementById('url-final').innerText = linkFinal;
-                document.getElementById('link-generado').style.display = "block";
-                
-            } catch (err) {
-                alert("Error: " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "GENERAR ENLACE RÁPIDO";
-            }
+            document.getElementById('url-final').innerText = linkFinal;
+            document.getElementById('resultado').style.display = "block";
         }
 
         function copiar() {
-            const text = document.getElementById('url-final').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert("¡Link copiado al portapapeles!");
-            });
+            const link = document.getElementById('url-final').innerText;
+            navigator.clipboard.writeText(link).then(() => alert("¡Copiado!"));
         }
     </script>
 </body>
