@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Administración | Generador de Galerías</title>
+    <style>
+        body { font-family: 'Lato', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { margin-top: 0; color: #333; font-size: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        label { display: block; margin-top: 15px; font-size: 12px; color: #666; text-transform: uppercase; font-weight: bold; }
+        input { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #000; color: #fff; border: none; border-radius: 6px; margin-top: 25px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { background: #333; }
+        #link-generado { margin-top: 25px; padding: 15px; background: #e8f4fd; border-radius: 6px; border: 1px dashed #2196f3; display: none; }
+        .copy-btn { background: #2196f3; font-size: 11px; padding: 5px 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Nueva Galería Digital</h2>
+        
+        <label>ID Carpeta de Google Drive (Fotos)</label>
+        <input type="text" id="folderId" placeholder="Ej: 1xqyPdl8FXnpOG7ea...">
+
+        <label>Nombre del Cliente (Título)</label>
+        <input type="text" id="titulo" placeholder="Ej: SUSY">
+
+        <label>Evento (Subtítulo)</label>
+        <input type="text" id="subtitulo" placeholder="Ej: MIS XV">
+
+        <label>ID Foto de Portada (Ideal para el Header)</label>
+        <input type="text" id="portadaId" placeholder="ID de la foto principal">
+
+        <label>ID de Video (Opcional)</label>
+        <input type="text" id="videoId" placeholder="ID del video en Drive">
+
+        <button onclick="generarEnlace()">GENERAR LINK DE CLIENTE</button>
+
+        <div id="link-generado">
+            <small style="color: #2196f3;">Enlace listo para enviar:</small>
+            <p id="url-final" style="font-size: 11px; word-break: break-all; margin: 10px 0; font-family: monospace;"></p>
+            <button class="copy-btn" onclick="copiarAlPortapapeles()">COPIAR LINK</button>
+        </div>
+    </div>
+
+    <script>
+        function generarEnlace() {
+            // Reemplaza esto con la URL real donde subiste tu index.html
+            const URL_BASE = window.location.href.replace('admin.html', 'index.html');
+            
+            const f = document.getElementById('folderId').value.trim();
+            const t = encodeURIComponent(document.getElementById('titulo').value.trim());
+            const s = encodeURIComponent(document.getElementById('subtitulo').value.trim());
+            const p = document.getElementById('portadaId').value.trim();
+            const v = document.getElementById('videoId').value.trim();
+
+            if(!f || !t) { alert("Mínimo necesitas el ID de carpeta y el Nombre."); return; }
+
+            const link = `${URL_BASE}?folder=${f}&t=${t}&s=${s}&p=${p}&v=${v}`;
+            
+            document.getElementById('url-final').innerText = link;
+            document.getElementById('link-generado').style.display = "block";
+        }
+
+        function copiarAlPortapapeles() {
+            const el = document.createElement('textarea');
+            el.value = document.getElementById('url-final').innerText;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            alert("¡Link copiado!");
+        }
+    </script>
+</body>
+</html>
