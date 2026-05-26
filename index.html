@@ -3,20 +3,45 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cargando Galería...</title>
+    <title id="html-title">Galería Privada</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Cormorant+Garamond:wght@300&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
     <link rel="stylesheet" href="style.css" />
+    
     <style>
         :root { --url-portada: none; }
-        .header-galeria::before { background-image: var(--url-portada) !important; background-color: #111; }
-        .loader-container { padding: 100px 20px; text-align: center; color: #888; font-size: 14px; letter-spacing: 2px; }
+        
+        /* Corregir el cargador enorme */
+        .loader-container { 
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Lato', sans-serif;
+            font-size: 10px;
+            letter-spacing: 5px;
+            color: #999;
+            text-transform: uppercase;
+            z-index: 1000;
+        }
+
+        .header-galeria::before { 
+            background-image: var(--url-portada) !important; 
+            background-color: #111; 
+        }
+
+        /* Ocultar elementos si no hay datos */
+        #contenedor-galeria:empty { display: none; }
     </style>
 </head>
 <body>
 
+    <div id="loader" class="loader-container">Cargando...</div>
+
     <div class="header-galeria" id="header-portada">
-      <div class="titulo" id="txt-titulo">Cargando</div>
-      <div class="subtitulo" id="txt-subtitulo">...</div>
+      <div class="titulo" id="txt-titulo"></div>
+      <div class="subtitulo" id="txt-subtitulo"></div>
       <img src="https://drive.google.com/thumbnail?id=1hpQGY_QfG4VAE4g8VJRTAYAXUWE-XtOB&sz=w200" class="logo-header">
     </div>
 
@@ -28,7 +53,6 @@
         </div>
     </div>
 
-    <div id="loader" class="loader-container">PREPARANDO TUS RECUERDOS...</div>
     <div class="grid-galeria" id="contenedor-galeria"></div>
 
     <script src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js"></script>
@@ -39,19 +63,19 @@
       const folderId = urlParams.get('f');
 
       if (folderId) {
-          // Acción "read": Lee el archivito de configuración instantáneamente
           fetch(`${WEB_APP_URL}?folder=${folderId}&action=read`)
             .then(res => res.json())
             .then(config => {
-                if(config.error) {
-                    document.getElementById('loader').innerText = "La galería aún no ha sido configurada por el administrador.";
+                // Si el archivo no existe en Drive, config será undefined o dará error
+                if(!config || config.error) {
+                    document.getElementById('loader').innerText = "Galería no activada";
                     return;
                 }
                 
-                // 1. Configurar Interfaz
-                document.getElementById('txt-titulo').innerText = config.t;
-                document.getElementById('txt-subtitulo').innerText = config.s;
-                document.title = config.t + " | Galería";
+                // Inyectar con seguridad (evita el "undefined")
+                document.getElementById('txt-titulo').innerText = config.t || "Galería";
+                document.getElementById('txt-subtitulo').innerText = config.s || "";
+                document.getElementById('html-title').innerText = (config.t || "Galería") + " | AlexDHZ";
 
                 if(config.p) {
                     document.documentElement.style.setProperty('--url-portada', `url(https://drive.google.com/thumbnail?id=${config.p}&sz=w2500)`);
@@ -62,33 +86,46 @@
                     document.getElementById('iframe-video').src = `https://drive.google.com/file/d/${config.v}/preview`;
                 }
 
-                // 2. Mostrar Fotos
-                renderizarFotos(config.fotos);
+                if(config.fotos && config.fotos.length > 0) {
+                    renderizarFotos(config.fotos);
+                }
+
                 document.getElementById('loader').style.display = "none";
             })
-            .catch(() => {
-                document.getElementById('loader').innerText = "Error al conectar con la base de datos.";
+            .catch(err => {
+                document.getElementById('loader').innerText = "Error de conexión";
+                console.error(err);
             });
+      } else {
+          document.getElementById('loader').innerText = "ID de carpeta ausente";
       }
 
       function renderizarFotos(fotos) {
         const contenedor = document.getElementById("contenedor-galeria");
+        contenedor.innerHTML = "";
         let numCols = window.innerWidth > 768 ? 3 : 2;
         let columnas = [];
+        
         for (let i = 0; i < numCols; i++) {
-          let col = document.createElement("div"); col.className = "columna-masonry";
-          contenedor.appendChild(col); columnas.push(col);
+          let col = document.createElement("div"); 
+          col.className = "columna-masonry";
+          contenedor.appendChild(col); 
+          columnas.push(col);
         }
+
         fotos.forEach((f, i) => {
           const a = document.createElement("a");
           a.href = `https://drive.google.com/uc?export=view&id=${f.id}`;
-          a.className = "glightbox";
+          a.className = "glightbox foto-link";
+          
           const img = document.createElement("img");
           img.src = `https://drive.google.com/thumbnail?id=${f.id}&sz=w600`;
           img.className = "foto-img";
+          
           a.appendChild(img);
           columnas[i % numCols].appendChild(a);
         });
+
         GLightbox({ selector: '.glightbox', touchNavigation: true, loop: true });
       }
     </script>
