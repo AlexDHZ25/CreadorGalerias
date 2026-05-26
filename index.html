@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title id="html-title">Galería</title>
+    <title id="html-title">Cargando...</title>
+    <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1hpQGY_QfG4VAE4g8VJRTAYAXUWE-XtOB&sz=w32">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
     <link rel="stylesheet" href="style.css" />
     <style>
       :root { --url-portada: none; }
       .header-galeria::before { background-image: var(--url-portada) !important; background-color: #111; }
-      /* Estilo para errores visibles */
-      .error-debug { color: #ff4444; padding: 20px; font-size: 12px; font-family: monospace; }
     </style>
 </head>
 <body>
@@ -25,23 +24,24 @@
       <button id="btn-ver-favoritos" class="btn-accion">FAVORITOS</button>
     </div>
 
-    <div id="cargando-texto" class="cargando">Cargando recuerdos...</div>
-    <div id="debug-log" class="error-debug"></div> <div class="grid-galeria" id="contenedor-galeria"></div>
+    <div id="cargando-texto" class="cargando">Cargando...</div>
+    <div class="grid-galeria" id="contenedor-galeria"></div>
 
     <script src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js"></script>
 
     <script>
-      // 1. URL DE TU SCRIPT (Verifica que sea la última versión implementada)
       const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwDzqk_-hYbnazbaXgwWgmdD5hVbMxJ_6nVqbVRIUY53wAKyXLAjIpNzHVu9EqcCppH/exec"; 
 
       const urlParams = new URLSearchParams(window.location.search);
-      const ID_CARPETA = urlParams.get('folder'); 
       const TITULO = urlParams.get('t') || "Galería Privada";
       const SUBTITULO = urlParams.get('s') || "Sesión";
       const ID_PORTADA = urlParams.get('p');
+      const DATA_COMPRIMIDA = urlParams.get('data');
+      const ID_CARPETA = urlParams.get('folder'); 
 
       document.getElementById('txt-titulo').innerText = TITULO;
       document.getElementById('txt-subtitulo').innerText = SUBTITULO;
+      document.getElementById('html-title').innerText = TITULO;
 
       if (ID_PORTADA) {
         document.documentElement.style.setProperty('--url-portada', `url(https://drive.google.com/thumbnail?id=${ID_PORTADA}&sz=w2500)`);
@@ -52,39 +52,33 @@
       const FOTOS_POR_LOTE = 15;
       let columnasGlobales = [];
 
-      if (!ID_CARPETA) {
-          document.getElementById("cargando-texto").innerText = "⚠️ Falta el ID de la carpeta en la URL.";
-      } else {
-          // LLAMADA CON REDIRECCIÓN MANEJADA
+      // LÓGICA DE CARGA ULTRA-RÁPIDA
+      if (DATA_COMPRIMIDA) {
+          try {
+              // Descomprime los datos del link (Base64 a JSON)
+              todasLasFotos = JSON.parse(decodeURIComponent(escape(atob(DATA_COMPRIMIDA))));
+              document.getElementById("cargando-texto").style.display = "none";
+              document.getElementById("barra-acciones").style.display = "flex";
+              iniciarGaleria();
+          } catch (e) {
+              console.error("Error decodificando data", e);
+          }
+      } else if (ID_CARPETA) {
+          // Respaldo lento si no hay data
           fetch(`${WEB_APP_URL}?folder=${ID_CARPETA}`)
-            .then(response => {
-                if (!response.ok) throw new Error('Respuesta de red no OK');
-                return response.json();
-            })
+            .then(res => res.json())
             .then(data => {
               document.getElementById("cargando-texto").style.display = "none";
-              
-              if (Array.isArray(data) && data.length > 0) {
-                  todasLasFotos = data;
-                  document.getElementById("barra-acciones").style.display = "flex";
-                  iniciarGaleria();
-              } else {
-                  document.getElementById("debug-log").innerText = "Aviso: La carpeta está vacía o el script no devolvió fotos.";
-              }
-            })
-            .catch(error => {
-              console.error('Error:', error);
-              document.getElementById("cargando-texto").style.display = "none";
-              document.getElementById("debug-log").innerText = "Error de conexión: " + error.message;
+              todasLasFotos = data;
+              document.getElementById("barra-acciones").style.display = "flex";
+              iniciarGaleria();
             });
       }
 
       function iniciarGaleria() {
         const contenedor = document.getElementById("contenedor-galeria");
         contenedor.innerHTML = "";
-        columnasGlobales = [];
         let numCols = window.innerWidth > 768 ? 3 : 2;
-
         for (let i = 0; i < numCols; i++) {
           let col = document.createElement("div");
           col.className = "columna-masonry";
@@ -100,15 +94,11 @@
 
         lote.forEach((foto, i) => {
           const enlace = document.createElement("a");
-          // URL de visualización directa para evitar errores de Lightbox
           enlace.href = `https://drive.google.com/uc?export=view&id=${foto.id}`;
           enlace.className = "glightbox foto-link";
-          
           const img = document.createElement("img");
-          // Tamaño mediano para carga rápida
           img.src = `https://drive.google.com/thumbnail?id=${foto.id}&sz=w600`;
           img.className = "foto-img";
-          
           enlace.appendChild(img);
           columnasGlobales[(indiceActual + i) % columnasGlobales.length].appendChild(enlace);
         });
