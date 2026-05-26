@@ -3,27 +3,23 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title id="html-title">Cargando Galería...</title>
-
-    <link rel="icon" type="image/png" href="https://drive.google.com/thumbnail?id=1hpQGY_QfG4VAE4g8VJRTAYAXUWE-XtOB&sz=w32">
-
+    <title id="html-title">Galería | AlexDHZ</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
     <link rel="stylesheet" href="style.css" />
-    
     <style>
       :root { --url-portada: none; }
-      .header-galeria::before {
-        background-image: var(--url-portada) !important;
-        background-color: #111;
-      }
+      .header-galeria::before { background-image: var(--url-portada) !important; background-color: #111; }
+      .loading-overlay { text-align: center; padding: 100px 20px; font-family: sans-serif; color: #666; }
+      .spinner { border: 4px solid rgba(0,0,0,.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: #000; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+      @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
     <div class="header-galeria" id="header-portada">
-      <div class="titulo" id="txt-titulo">...</div>
-      <div class="subtitulo" id="txt-subtitulo">Cargando</div>
-      <img src="https://drive.google.com/thumbnail?id=1hpQGY_QfG4VAE4g8VJRTAYAXUWE-XtOB&sz=w200" class="logo-header" alt="Logo">
+      <div class="titulo" id="txt-titulo">Cargando...</div>
+      <div class="subtitulo" id="txt-subtitulo">Preparando recuerdos</div>
+      <img src="https://drive.google.com/thumbnail?id=1hpQGY_QfG4VAE4g8VJRTAYAXUWE-XtOB&sz=w200" class="logo-header">
     </div>
 
     <div class="contenedor-video" id="seccion-video" style="display: none;">
@@ -31,112 +27,71 @@
             <div class="video-wrapper">
                 <iframe id="iframe-video" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
             </div>
-            <a id="link-descarga-video" href="#" class="btn-descargar-video" target="_blank">
-                Descargar Video HQ
-            </a>
         </div>
     </div>
 
-    <div class="barra-acciones" id="barra-acciones" style="display: none;">
-      <button id="btn-ver-favoritos" class="btn-accion">FAVORITOS</button>
+    <div id="loader" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Cargando fotos desde Drive...</p>
     </div>
-
-    <div id="cargando-texto" class="cargando">Cargando...</div>
+    
     <div class="grid-galeria" id="contenedor-galeria"></div>
 
     <script src="https://cdn.jsdelivr.net/gh/mcstudios/glightbox/dist/js/glightbox.min.js"></script>
 
     <script>
-      // 1. CONFIGURACIÓN
       const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwDzqk_-hYbnazbaXgwWgmdD5hVbMxJ_6nVqbVRIUY53wAKyXLAjIpNzHVu9EqcCppH/exec"; 
-
       const urlParams = new URLSearchParams(window.location.search);
-      const TITULO = urlParams.get('t') || "Galería Privada";
-      const SUBTITULO = urlParams.get('s') || "Sesión";
+      
+      const TITULO = urlParams.get('t') || "Mi Galería";
+      const SUBTITULO = urlParams.get('s') || "Sesión Fotográfica";
       const ID_PORTADA = urlParams.get('p');
+      const ID_CARPETA = urlParams.get('f');
       const ID_VIDEO = urlParams.get('v');
-      const ID_CARPETA = urlParams.get('f'); // Backup ID
-      const DATA_IDS = urlParams.get('d'); // IDs comprimidos
 
-      // 2. INYECTAR TEXTOS E INTERFAZ
+      // Inyectar textos
       document.getElementById('txt-titulo').innerText = TITULO;
       document.getElementById('txt-subtitulo').innerText = SUBTITULO;
-      document.getElementById('html-title').innerText = TITULO;
+      document.getElementById('html-title').innerText = TITULO + " | AlexDHZ";
 
       if (ID_PORTADA) {
         document.documentElement.style.setProperty('--url-portada', `url(https://drive.google.com/thumbnail?id=${ID_PORTADA}&sz=w2500)`);
       }
 
       if (ID_VIDEO) {
-        document.getElementById('seccion-video').style.display = "flex";
-        document.getElementById('iframe-video').src = `https://drive.google.com/file/d/${ID_VIDEO}/preview`;
-        document.getElementById('link-descarga-video').href = `https://drive.google.com/uc?export=download&id=${ID_VIDEO}`;
+          document.getElementById('seccion-video').style.display = "flex";
+          document.getElementById('iframe-video').src = `https://drive.google.com/file/d/${ID_VIDEO}/preview`;
       }
 
-      // 3. LÓGICA DE CARGA
-      let todasLasFotos = [];
-      let indiceActual = 0;
-      const FOTOS_POR_LOTE = 15;
-      let columnasGlobales = [];
-      let lightboxInstancia = null;
-
-      const contenedor = document.getElementById("contenedor-galeria");
-      const cargandoTexto = document.getElementById("cargando-texto");
-
-      // Decidir método de carga
-      if (DATA_IDS) {
-          try {
-              // Carga instantánea desde el link
-              const ids = atob(DATA_IDS).split(',');
-              todasLasFotos = ids.map(id => ({ id: id }));
-              cargandoTexto.style.display = "none";
-              document.getElementById("barra-acciones").style.display = "flex";
-              iniciarGaleria();
-          } catch (e) {
-              if (ID_CARPETA) cargarDesdeDrive();
-          }
-      } else if (ID_CARPETA) {
-          cargarDesdeDrive();
-      }
-
-      function cargarDesdeDrive() {
+      // Cargar Fotos
+      if (ID_CARPETA) {
           fetch(`${WEB_APP_URL}?folder=${ID_CARPETA}`)
             .then(res => res.json())
             .then(data => {
-              cargandoTexto.style.display = "none";
-              todasLasFotos = data;
-              document.getElementById("barra-acciones").style.display = "flex";
-              iniciarGaleria();
+                document.getElementById('loader').style.display = "none";
+                renderizarFotos(data);
             })
-            .catch(() => {
-              cargandoTexto.innerText = "Error al conectar con Drive.";
+            .catch(err => {
+                document.getElementById('loader').innerHTML = "<p>Error al cargar la carpeta. Revisa los permisos.</p>";
             });
       }
 
-      function iniciarGaleria() {
-        contenedor.innerHTML = "";
-        indiceActual = 0;
-        columnasGlobales = [];
+      function renderizarFotos(fotos) {
+        const contenedor = document.getElementById("contenedor-galeria");
         let numCols = window.innerWidth > 768 ? 3 : 2;
-
+        let columnas = [];
+        
         for (let i = 0; i < numCols; i++) {
           let col = document.createElement("div");
           col.className = "columna-masonry";
           contenedor.appendChild(col);
-          columnasGlobales.push(col);
+          columnas.push(col);
         }
-        cargarSiguienteLote();
-      }
 
-      function cargarSiguienteLote() {
-        let lote = todasLasFotos.slice(indiceActual, indiceActual + FOTOS_POR_LOTE);
-        if (lote.length === 0) return;
-
-        lote.forEach((foto, i) => {
+        fotos.forEach((foto, i) => {
           const enlace = document.createElement("a");
-          // URL corregida para que el Lightbox no falle
           enlace.href = `https://drive.google.com/uc?export=view&id=${foto.id}`;
-          enlace.className = "glightbox foto-link";
+          enlace.className = "glightbox";
           
           const img = document.createElement("img");
           img.src = `https://drive.google.com/thumbnail?id=${foto.id}&sz=w600`;
@@ -144,22 +99,11 @@
           img.loading = "lazy";
           
           enlace.appendChild(img);
-          columnasGlobales[(indiceActual + i) % columnasGlobales.length].appendChild(enlace);
+          columnas[i % numCols].appendChild(enlace);
         });
 
-        indiceActual += FOTOS_POR_LOTE;
-        
-        // Refrescar Lightbox
-        if (lightboxInstancia) lightboxInstancia.destroy();
-        lightboxInstancia = GLightbox({ selector: '.glightbox', touchNavigation: true, loop: true });
+        GLightbox({ selector: '.glightbox', touchNavigation: true, loop: true });
       }
-
-      // Scroll Infinito
-      window.onscroll = () => {
-        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) {
-          if (indiceActual < todasLasFotos.length) cargarSiguienteLote();
-        }
-      };
     </script>
 </body>
 </html>
