@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title id="html-title">Galería Privada</title>
+    <title id="html-title">Mi Galería</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Cormorant+Garamond:wght@300&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
@@ -12,18 +12,19 @@
     <style>
         :root { --url-portada: none; }
         
-        /* Corregir el cargador enorme */
+        /* Cargador elegante y reposicionado */
         .loader-container { 
             position: fixed;
-            top: 50%;
+            top: 20px; /* Separado del borde superior */
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
             font-family: 'Lato', sans-serif;
             font-size: 10px;
             letter-spacing: 5px;
             color: #999;
             text-transform: uppercase;
-            z-index: 1000;
+            z-index: 1001; /* Por encima de todo */
+            padding-top: 20px; /* Espacio extra para que no ensime con el logo */
         }
 
         .header-galeria::before { 
@@ -31,13 +32,14 @@
             background-color: #111; 
         }
 
-        /* Ocultar elementos si no hay datos */
-        #contenedor-galeria:empty { display: none; }
+        /* Mantener la elegancia si no hay datos */
+        .titulo { font-family: 'Cormorant Garamond', serif; }
+        .subtitulo { font-family: 'Lato', sans-serif; }
     </style>
 </head>
 <body>
 
-    <div id="loader" class="loader-container">Cargando...</div>
+    <div id="loader" class="loader-container">Cargando</div>
 
     <div class="header-galeria" id="header-portada">
       <div class="titulo" id="txt-titulo"></div>
@@ -63,17 +65,18 @@
       const folderId = urlParams.get('f');
 
       if (folderId) {
+          // Leer la configuración
           fetch(`${WEB_APP_URL}?folder=${folderId}&action=read`)
             .then(res => res.json())
             .then(config => {
-                // Si el archivo no existe en Drive, config será undefined o dará error
+                // Si la carpeta no está "activada" (no hay JSON), ocultar cargador y salir
                 if(!config || config.error) {
-                    document.getElementById('loader').innerText = "Galería no activada";
-                    return;
+                    document.getElementById('loader').style.display = "none";
+                    return; 
                 }
                 
-                // Inyectar con seguridad (evita el "undefined")
-                document.getElementById('txt-titulo').innerText = config.t || "Galería";
+                // 1. Configurar Portada y Títulos
+                document.getElementById('txt-titulo').innerText = config.t || "";
                 document.getElementById('txt-subtitulo').innerText = config.s || "";
                 document.getElementById('html-title').innerText = (config.t || "Galería") + " | AlexDHZ";
 
@@ -81,31 +84,38 @@
                     document.documentElement.style.setProperty('--url-portada', `url(https://drive.google.com/thumbnail?id=${config.p}&sz=w2500)`);
                 }
                 
+                // 2. Configurar Video
                 if(config.v) {
                     document.getElementById('seccion-video').style.display = "flex";
                     document.getElementById('iframe-video').src = `https://drive.google.com/file/d/${config.v}/preview`;
                 }
 
+                // 3. Renderizar Fotos si existen
                 if(config.fotos && config.fotos.length > 0) {
                     renderizarFotos(config.fotos);
                 }
 
+                // Ocultar cargador cuando todo esté listo
                 document.getElementById('loader').style.display = "none";
             })
             .catch(err => {
-                document.getElementById('loader').innerText = "Error de conexión";
-                console.error(err);
+                console.error("Error al leer Drive:", err);
+                // En caso de error de red, ocultar cargador para no molestar
+                document.getElementById('loader').style.display = "none";
             });
       } else {
-          document.getElementById('loader').innerText = "ID de carpeta ausente";
+          // Si no hay ID de carpeta en el link, ocultar cargador
+          document.getElementById('loader').style.display = "none";
       }
 
       function renderizarFotos(fotos) {
         const contenedor = document.getElementById("contenedor-galeria");
-        contenedor.innerHTML = "";
+        contenedor.innerHTML = ""; // Limpiar
+        
         let numCols = window.innerWidth > 768 ? 3 : 2;
         let columnas = [];
         
+        // Crear columnas Masonry
         for (let i = 0; i < numCols; i++) {
           let col = document.createElement("div"); 
           col.className = "columna-masonry";
@@ -113,6 +123,7 @@
           columnas.push(col);
         }
 
+        // Distribuir fotos
         fotos.forEach((f, i) => {
           const a = document.createElement("a");
           a.href = `https://drive.google.com/uc?export=view&id=${f.id}`;
@@ -121,11 +132,13 @@
           const img = document.createElement("img");
           img.src = `https://drive.google.com/thumbnail?id=${f.id}&sz=w600`;
           img.className = "foto-img";
+          img.loading = "lazy";
           
           a.appendChild(img);
           columnas[i % numCols].appendChild(a);
         });
 
+        // Activar Lightbox
         GLightbox({ selector: '.glightbox', touchNavigation: true, loop: true });
       }
     </script>
