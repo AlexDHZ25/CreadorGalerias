@@ -3,180 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Configurador Maestro | AlexDHZ</title>
-    
+    <title>Panel Editorial | AlexDHZ</title>
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Cormorant+Garamond:wght@300&display=swap" rel="stylesheet">
-    
     <style>
-        :root {
-            --color-acentos: #007bff;
-            --fuente-titulos: "Cormorant Garamond", serif;
-            --fuente-cuerpo: "Lato", sans-serif;
-        }
-
-        body { 
-            font-family: var(--fuente-cuerpo); 
-            background: #ffffff; 
-            color: #333;
-            margin: 0;
-            padding: 40px 20px;
-            display: flex; 
-            justify-content: center; 
-        }
-
-        .card { 
-            background: white; 
-            padding: 40px; 
-            border-radius: 4px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.05); 
-            width: 100%; 
-            max-width: 500px; 
-            border: 1px solid #f0f0f0;
-        }
-
-        h2 { 
-            font-family: var(--fuente-titulos);
-            font-size: 32px;
-            font-weight: 300;
-            text-align: center; 
-            margin: 0 0 30px 0;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-        }
-
-        label { 
-            display: block; 
-            margin-top: 20px; 
-            font-size: 10px; 
-            font-weight: 700; 
-            color: #999; 
-            text-transform: uppercase; 
-            letter-spacing: 2px;
-        }
-
-        input { 
-            width: 100%; 
-            padding: 12px 0; 
-            margin: 5px 0 10px 0; 
-            border: none;
-            border-bottom: 1px solid #ddd;
-            font-family: var(--fuente-cuerpo);
-            font-size: 15px; 
-            box-sizing: border-box; 
-            transition: border-color 0.3s;
-            outline: none;
-        }
-
+        :root { --fuente-titulos: "Cormorant Garamond", serif; --fuente-cuerpo: "Lato", sans-serif; }
+        body { font-family: var(--fuente-cuerpo); background: #fff; color: #333; margin: 0; padding: 40px 20px; display: flex; justify-content: center; }
+        .card { background: white; padding: 40px; border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); width: 100%; max-width: 500px; border: 1px solid #f0f0f0; }
+        h2 { font-family: var(--fuente-titulos); font-size: 32px; font-weight: 300; text-align: center; margin-bottom: 30px; letter-spacing: 2px; text-transform: uppercase; }
+        label { display: block; margin-top: 20px; font-size: 10px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 2px; }
+        input { width: 100%; padding: 12px 0; margin-bottom: 10px; border: none; border-bottom: 1px solid #ddd; font-family: var(--fuente-cuerpo); font-size: 15px; outline: none; transition: 0.3s; }
         input:focus { border-bottom-color: #000; }
-
-        button { 
-            width: 100%; 
-            padding: 16px; 
-            background: #000; 
-            color: #fff; 
-            border: none; 
-            border-radius: 2px;
-            cursor: pointer; 
-            font-family: var(--fuente-cuerpo);
-            font-weight: 700; 
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-top: 20px;
-            transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-        }
-
+        button { width: 100%; padding: 16px; background: #000; color: #fff; border: none; cursor: pointer; font-family: var(--fuente-cuerpo); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; margin-top: 20px; transition: 0.4s; }
         button:hover { background: #333; letter-spacing: 4px; }
-        
-        .btn-save { background: #000; border: 1px solid #000; color: #fff; }
-        .btn-save:hover { background: #fff; color: #000; }
-
-        #link-box { 
-            display:none; 
-            background: #fafafa; 
-            padding: 20px; 
-            margin-top: 30px; 
-            border: 1px solid #eee;
-            font-size: 12px; 
-            text-align: center;
-        }
-
-        #url-final { 
-            color: var(--color-acentos); 
-            word-break: break-all; 
-            display: block;
-            margin: 15px 0;
-            font-family: var(--fuente-cuerpo);
-            text-decoration: underline;
-        }
-
-        .status { 
-            font-size: 11px; 
-            color: #888; 
-            font-style: italic;
-            margin-top: 8px; 
-            text-align: center;
-        }
-
-        .hint { font-size: 10px; color: #ccc; margin-bottom: 15px; display: block; }
+        .btn-save { background: #fff; border: 1px solid #000; color: #000; }
+        .btn-save:hover { background: #000; color: #fff; }
+        #link-box { display:none; background: #fafafa; padding: 20px; margin-top: 30px; border: 1px solid #eee; text-align: center; }
+        #url-final { color: #007bff; word-break: break-all; display: block; margin: 15px 0; text-decoration: underline; }
+        .status { font-size: 11px; color: #888; font-style: italic; margin-top: 8px; text-align: center; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2>Panel Editorial</h2>
-        
-        <label>ID Carpeta de Origen</label>
-        <input type="text" id="folderId" placeholder="ID de Drive">
-        <button onclick="cargarCarpeta()">Escanear Directorio</button>
+        <label>ID Carpeta de Google Drive</label>
+        <input type="text" id="folderId" placeholder="Pega el ID aquí">
+        <button onclick="cargarCarpeta()">Escanear Carpeta</button>
         <div id="status" class="status"></div>
 
         <div id="config-seccion" style="display:none; margin-top:30px; border-top: 1px solid #f4f4f4; padding-top:10px;">
-            <label>Nombre en Pantalla</label>
+            <label>Nombre del Cliente</label>
             <input type="text" id="t" placeholder="Ej: Constanza">
-            
-            <label>Descripción del Evento</label>
+            <label>Evento / Subtítulo</label>
             <input type="text" id="s" placeholder="Ej: Mis XV Años">
-            
-            <label>ID Imagen de Portada</label>
-            <input type="text" id="p" placeholder="ID de la foto principal">
-            
-            <label>ID Video Principal (Opcional)</label>
-            <input type="text" id="v" placeholder="ID del archivo de video">
-            
+            <label>ID Foto Portada (Header)</label>
+            <input type="text" id="p" placeholder="ID de la imagen">
+            <label>ID Video (Opcional)</label>
+            <input type="text" id="v" placeholder="ID del video en Drive">
             <button class="btn-save" onclick="guardarConfig()">Activar Galería</button>
         </div>
 
         <div id="link-box">
-            <label>Enlace de Entrega:</label>
+            <label>Enlace para el Cliente:</label>
             <span id="url-final"></span>
-            <small style="cursor:pointer; color:#999;" onclick="copiar()">Haga clic para copiar al portapapeles</small>
+            <small style="cursor:pointer; color:#999;" onclick="copiar()">Clic para copiar</small>
         </div>
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyI_eOY3aNOYfmRXoOUJqMmoMkCXh__kemfbGk2MfBAzf9uXUVMvGKwlrWwaeIo_raN/exec"; 
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzHh32gyT8Iez8kwEMagVZ9BQX59q6x1_iD_42TkSnXjikGrmJ1tkNTR-NT2SZDiwr/exec"; 
         let fotosEscaneadas = [];
 
         async function cargarCarpeta() {
             const fid = document.getElementById('folderId').value.trim();
-            if(!fid) return;
-            
-            document.getElementById('status').innerText = "Sincronizando archivos...";
-            
+            if(!fid) return alert("Ingresa un ID");
+            document.getElementById('status').innerText = "Sincronizando con Drive...";
             try {
                 const res = await fetch(`${WEB_APP_URL}?folder=${fid}&action=scan`);
                 fotosEscaneadas = await res.json();
-                document.getElementById('status').innerText = `✔ ${fotosEscaneadas.length} imágenes listas.`;
+                document.getElementById('status').innerText = `✔ ${fotosEscaneadas.length} imágenes encontradas.`;
                 document.getElementById('config-seccion').style.display = "block";
-            } catch(e) { 
-                document.getElementById('status').innerText = "Error: Verifica los permisos de la carpeta.";
-            }
+            } catch(e) { document.getElementById('status').innerText = "Error: Verifica el ID y permisos."; }
         }
 
         async function guardarConfig() {
             const btn = document.querySelector('.btn-save');
-            btn.innerText = "Sincronizando con la nube...";
-
+            btn.innerText = "Creando archivo de configuración...";
             const config = {
                 folderId: document.getElementById('folderId').value.trim(),
                 t: document.getElementById('t').value.trim(),
@@ -185,29 +76,22 @@
                 v: document.getElementById('v').value.trim(),
                 fotos: fotosEscaneadas
             };
-
             try {
                 await fetch(WEB_APP_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
+                    mode: 'no-cors', // Necesario para Google Apps Script
                     body: JSON.stringify(config)
                 });
-
-                const link = `https://alexdhzgaleries.netlify.app/?f=${config.folderId}`;
+                const link = `${window.location.origin}/?f=${config.folderId}`;
                 document.getElementById('url-final').innerText = link;
                 document.getElementById('link-box').style.display = "block";
-                btn.innerText = "Galería Publicada";
-            } catch(e) { 
-                alert("Error al guardar la configuración."); 
-                btn.innerText = "Reintentar Guardado";
-            }
+                btn.innerText = "¡Galería Publicada!";
+            } catch(e) { alert("Error al guardar."); }
         }
 
         function copiar() {
-            const text = document.getElementById('url-final').innerText;
-            navigator.clipboard.writeText(text).then(() => {
-                alert("Enlace copiado.");
-            });
+            navigator.clipboard.writeText(document.getElementById('url-final').innerText);
+            alert("Copiado");
         }
     </script>
 </body>
